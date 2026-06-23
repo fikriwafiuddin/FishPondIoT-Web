@@ -112,6 +112,26 @@
           </div>
         </div>
 
+        <!-- Pump Control Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:col-span-2 lg:col-span-1">
+          <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Pump Control</h2>
+          <div class="space-y-3">
+            <button
+              v-for="mode in ['ON', 'OFF', 'AUTO'] as PumpMode[]"
+              :key="mode"
+              @click="handlePumpChange(mode)"
+              :disabled="pumpLoading"
+              class="w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              :class="currentPumpMode === mode
+                ? 'bg-cyan-600 text-white shadow-lg scale-105'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+            >
+              <span>{{ mode === 'ON' ? '💧' : mode === 'OFF' ? '🚫' : '🔄' }}</span>
+              <span>{{ mode }}</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Manual Feeding Card -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:col-span-2 lg:col-span-1">
           <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Manual Feeding</h2>
@@ -166,7 +186,7 @@
 
       <!-- Error Display -->
       <div
-        v-if="monitoringError || scheduleError"
+        v-if="monitoringError || scheduleError || lampError || pumpError"
         class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
       >
         <div class="flex items-center gap-2 text-red-800 dark:text-red-200">
@@ -176,6 +196,12 @@
         <p class="mt-1 text-sm text-red-600 dark:text-red-300">
           Unable to connect to Firebase. Please check your internet connection.
         </p>
+        <div v-if="lampError" class="mt-2 text-sm text-red-600 dark:text-red-300">
+          Lamp Control Error: {{ lampError.message }}
+        </div>
+        <div v-if="pumpError" class="mt-2 text-sm text-red-600 dark:text-red-300">
+          Pump Control Error: {{ pumpError.message }}
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -197,12 +223,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { LampMode } from '../types'
-import { useMonitoringData, useLampControl, useManualFeeding, useFeedingSchedule, getTemperatureStatus } from '../composables/useFirebase'
+import type { LampMode, PumpMode } from '../types'
+import { useMonitoringData, useLampControl, usePumpControl, useManualFeeding, useFeedingSchedule, getTemperatureStatus } from '../composables/useFirebase'
 
 // Use composables
 const { data: monitoring, loading: monitoringLoading, error: monitoringError, isDeviceOnline } = useMonitoringData()
 const { setLampMode, loading: lampLoading, error: lampError } = useLampControl()
+const { setPumpMode, loading: pumpLoading, error: pumpError } = usePumpControl()
 const { triggerFeeding, loading: feedingLoading } = useManualFeeding()
 const { data: schedule, loading: scheduleLoading, error: scheduleError, updateSchedule } = useFeedingSchedule()
 
@@ -268,12 +295,30 @@ const currentLampMode = computed(() => {
   return monitoring.value?.lamp_status as LampMode ?? 'OFF'
 })
 
+const currentPumpMode = computed(() => {
+  // For now, default to OFF since pump_status is not in monitoring data
+  // This could be updated if IoT device sends pump status
+  return 'OFF' as PumpMode
+})
+
 // Event handlers
 const handleLampChange = async (mode: LampMode) => {
+  console.log('Lamp change requested:', mode)
   try {
     await setLampMode(mode)
+    console.log('Lamp mode changed successfully to:', mode)
   } catch (error) {
     console.error('Failed to change lamp mode:', error)
+  }
+}
+
+const handlePumpChange = async (mode: PumpMode) => {
+  console.log('Pump change requested:', mode)
+  try {
+    await setPumpMode(mode)
+    console.log('Pump mode changed successfully to:', mode)
+  } catch (error) {
+    console.error('Failed to change pump mode:', error)
   }
 }
 

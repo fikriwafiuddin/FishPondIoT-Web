@@ -8,6 +8,9 @@
 // Lamp mode options
 export type LampMode = 'ON' | 'OFF' | 'AUTO'
 
+// Pump mode options
+export type PumpMode = 'ON' | 'OFF' | 'AUTO'
+
 // Temperature status
 export type TemperatureStatus = 'NO DATA' | 'COLD' | 'NORMAL' | 'HOT'
 
@@ -55,6 +58,9 @@ export interface Controls {
   lamp: {
     mode: LampMode
   }
+  pump: {
+    mode: PumpMode
+  }
   manual_feeding: {
     trigger: boolean
   }
@@ -67,6 +73,9 @@ export interface Controls {
 export interface PondControls {
   lamp: {
     mode: LampMode
+  }
+  pump: {
+    mode: PumpMode
   }
   manual_feeding: {
     trigger: boolean
@@ -102,4 +111,12 @@ export interface FirebaseData {
       controls: PondControls
     }
   }
+}
+
+/**
+ * Pump Control Data (Write)
+ * Path: /controls/pump/mode and /ponds/pond_01/controls/pump/mode
+ */
+export interface PumpControl {
+  mode: PumpMode
 }
