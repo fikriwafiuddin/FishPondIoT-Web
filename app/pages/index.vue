@@ -228,8 +228,8 @@ import { useMonitoringData, useLampControl, usePumpControl, useManualFeeding, us
 
 // Use composables
 const { data: monitoring, loading: monitoringLoading, error: monitoringError, isDeviceOnline } = useMonitoringData()
-const { setLampMode, loading: lampLoading, error: lampError } = useLampControl()
-const { setPumpMode, loading: pumpLoading, error: pumpError } = usePumpControl()
+const { setLampMode, currentMode: currentLampMode, loading: lampLoading, error: lampError } = useLampControl()
+const { setPumpMode, currentMode: currentPumpMode, loading: pumpLoading, error: pumpError } = usePumpControl()
 const { triggerFeeding, loading: feedingLoading } = useManualFeeding()
 const { data: schedule, loading: scheduleLoading, error: scheduleError, updateSchedule } = useFeedingSchedule()
 
@@ -288,17 +288,6 @@ const lampStatusText = computed(() => {
     default:
       return 'Unknown status'
   }
-})
-
-const currentLampMode = computed(() => {
-  // Use the lamp mode from controls if available, otherwise from monitoring
-  return monitoring.value?.lamp_status as LampMode ?? 'OFF'
-})
-
-const currentPumpMode = computed(() => {
-  // For now, default to OFF since pump_status is not in monitoring data
-  // This could be updated if IoT device sends pump status
-  return 'OFF' as PumpMode
 })
 
 // Event handlers

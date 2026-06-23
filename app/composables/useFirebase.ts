@@ -127,6 +127,44 @@ export function useMonitoringData() {
 export function useLampControl() {
   const loading: Ref<boolean> = ref(false)
   const error: Ref<Error | null> = ref(null)
+  const currentMode: Ref<LampMode> = ref('OFF')
+
+  let unsubscribe: (() => void) | null = null
+
+  // Listen to lamp mode changes
+  onMounted(async () => {
+    if (import.meta.server) return
+
+    try {
+      const fb = await loadFirebase()
+      if (!fb) return
+
+      const reference = fb.ref(database, 'controls/lamp/mode')
+
+      unsubscribe = fb.onValue(
+        reference,
+        (snapshot: any) => {
+          if (snapshot.exists()) {
+            currentMode.value = snapshot.val() as LampMode
+            console.log('[useLampControl] Lamp mode updated:', currentMode.value)
+          } else {
+            currentMode.value = 'OFF'
+          }
+        },
+        (err: Error) => {
+          console.error('[useLampControl] Error listening to lamp mode:', err)
+        },
+      )
+    } catch (e) {
+      console.error('[useLampControl] Failed to setup listener:', e)
+    }
+  })
+
+  onUnmounted(() => {
+    if (unsubscribe) {
+      unsubscribe()
+    }
+  })
 
   const setLampMode = async (mode: LampMode): Promise<void> => {
     if (import.meta.server) return
@@ -172,6 +210,7 @@ export function useLampControl() {
   return {
     setLampMode,
     getLampMode,
+    currentMode,
     loading,
     error,
   }
@@ -183,6 +222,44 @@ export function useLampControl() {
 export function usePumpControl() {
   const loading: Ref<boolean> = ref(false)
   const error: Ref<Error | null> = ref(null)
+  const currentMode: Ref<PumpMode> = ref('OFF')
+
+  let unsubscribe: (() => void) | null = null
+
+  // Listen to pump mode changes
+  onMounted(async () => {
+    if (import.meta.server) return
+
+    try {
+      const fb = await loadFirebase()
+      if (!fb) return
+
+      const reference = fb.ref(database, 'controls/pump/mode')
+
+      unsubscribe = fb.onValue(
+        reference,
+        (snapshot: any) => {
+          if (snapshot.exists()) {
+            currentMode.value = snapshot.val() as PumpMode
+            console.log('[usePumpControl] Pump mode updated:', currentMode.value)
+          } else {
+            currentMode.value = 'OFF'
+          }
+        },
+        (err: Error) => {
+          console.error('[usePumpControl] Error listening to pump mode:', err)
+        },
+      )
+    } catch (e) {
+      console.error('[usePumpControl] Failed to setup listener:', e)
+    }
+  })
+
+  onUnmounted(() => {
+    if (unsubscribe) {
+      unsubscribe()
+    }
+  })
 
   const setPumpMode = async (mode: PumpMode): Promise<void> => {
     if (import.meta.server) return
@@ -228,6 +305,7 @@ export function usePumpControl() {
   return {
     setPumpMode,
     getPumpMode,
+    currentMode,
     loading,
     error,
   }
